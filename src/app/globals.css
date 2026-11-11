@@ -1,0 +1,187 @@
+@import "tailwindcss";
+
+/* ───────────────────────── Design tokens ─────────────────────────
+   One festive identity shared by the app and every game:
+   deep pine night, warm cream, berry red, gold.                    */
+@theme {
+  --color-night: #0b1d16;
+  --color-night-2: #102a20;
+  --color-pine: #1f6b4a;
+  --color-pine-2: #2b8a5f;
+  --color-panel: #143426;
+  --color-panel-2: #1a4231;
+  --color-line: rgb(255 255 255 / 0.09);
+  --color-cream: #fff7ea;
+  --color-muted: #a7bdb1;
+  --color-faint: #6f8a7d;
+  --color-berry: #e0464e;
+  --color-berry-2: #b92f38;
+  --color-gold: #f5bf4f;
+  --color-gold-2: #d99a22;
+  --color-ice: #cfe8ff;
+  --color-duda: #ff7d8e;
+  --color-filipino: #6cc6ff;
+
+  --font-display: var(--font-fredoka), ui-rounded, system-ui, sans-serif;
+  --font-sans: var(--font-nunito), ui-rounded, system-ui, sans-serif;
+
+  --radius-card: 22px;
+  --shadow-card: 0 1px 0 rgb(255 255 255 / 0.06) inset, 0 10px 30px -12px rgb(0 0 0 / 0.55);
+  --shadow-pop: 0 1px 0 rgb(255 255 255 / 0.25) inset, 0 -3px 0 rgb(0 0 0 / 0.18) inset, 0 8px 20px -8px rgb(0 0 0 / 0.6);
+
+  --animate-door-glow: door-glow 2.4s ease-in-out infinite;
+  --animate-float: float 4s ease-in-out infinite;
+  --animate-pop-in: pop-in 0.45s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+  --animate-fade-up: fade-up 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  --animate-shake: shake 0.4s ease-in-out;
+}
+
+@keyframes door-glow {
+  0%, 100% { box-shadow: 0 0 0 2px var(--color-gold), 0 0 18px 2px rgb(245 191 79 / 0.35), var(--shadow-pop); }
+  50% { box-shadow: 0 0 0 2px var(--color-gold), 0 0 30px 6px rgb(245 191 79 / 0.6), var(--shadow-pop); }
+}
+@keyframes float { 0%, 100% { transform: translateY(0) rotate(-2deg); } 50% { transform: translateY(-6px) rotate(2deg); } }
+@keyframes pop-in { from { opacity: 0; transform: scale(0.85); } to { opacity: 1; transform: none; } }
+@keyframes fade-up { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+@keyframes shake { 0%, 100% { transform: none; } 20% { transform: translateX(-5px) rotate(-2deg); } 40% { transform: translateX(5px) rotate(2deg); } 60% { transform: translateX(-3px); } 80% { transform: translateX(3px); } }
+@keyframes snowfall { from { transform: translate3d(0, -100%, 0); } to { transform: translate3d(0, 100%, 0); } }
+
+:root {
+  color-scheme: dark;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --nav-h: 76px;
+}
+
+html {
+  background: var(--color-night);
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  min-height: 100dvh;
+  background:
+    radial-gradient(120% 60% at 50% -10%, #1f5a41 0%, rgb(31 90 65 / 0) 60%),
+    radial-gradient(80% 40% at 100% 100%, rgb(224 70 78 / 0.12) 0%, transparent 70%),
+    var(--color-night);
+  background-attachment: fixed;
+  color: var(--color-cream);
+  font-family: var(--font-sans);
+  overscroll-behavior: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, .font-display { font-family: var(--font-display); letter-spacing: -0.01em; }
+
+button, a { -webkit-user-select: none; user-select: none; touch-action: manipulation; }
+img { -webkit-user-drag: none; user-select: none; }
+
+/* Gentle CSS snowfall behind everything (two layers of dots, GPU-only transforms). */
+.snow-layer {
+  position: fixed;
+  inset: -100% 0 0 0;
+  height: 200%;
+  pointer-events: none;
+  z-index: 0;
+  background-image:
+    radial-gradient(2px 2px at 20px 30px, rgb(255 255 255 / 0.7), transparent),
+    radial-gradient(1.5px 1.5px at 120px 80px, rgb(255 255 255 / 0.5), transparent),
+    radial-gradient(2.5px 2.5px at 200px 160px, rgb(255 255 255 / 0.55), transparent),
+    radial-gradient(1.5px 1.5px at 300px 40px, rgb(255 255 255 / 0.45), transparent),
+    radial-gradient(2px 2px at 70px 220px, rgb(255 255 255 / 0.5), transparent);
+  background-size: 340px 260px;
+  animation: snowfall 28s linear infinite;
+  opacity: 0.55;
+}
+.snow-layer.slow { background-size: 520px 420px; animation-duration: 46s; opacity: 0.35; filter: blur(0.5px); }
+@media (prefers-reduced-motion: reduce) { .snow-layer { animation: none; } }
+
+/* Reusable surfaces (in the components layer so utilities can override them) */
+@layer components {
+.card {
+  background: linear-gradient(180deg, rgb(255 255 255 / 0.065), rgb(255 255 255 / 0.03));
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  height: 52px;
+  padding: 0 1.4rem;
+  border-radius: 999px;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.05rem;
+  transition: transform 0.12s ease, filter 0.12s ease;
+}
+.btn:active { transform: scale(0.96); }
+.btn-primary { background: linear-gradient(180deg, #ff5a62, var(--color-berry-2)); color: white; box-shadow: var(--shadow-pop); }
+.btn-gold { background: linear-gradient(180deg, #ffd479, var(--color-gold-2)); color: #3b2504; box-shadow: var(--shadow-pop); }
+.btn-ghost { background: rgb(255 255 255 / 0.08); color: var(--color-cream); border: 1px solid var(--color-line); }
+
+}
+
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { scrollbar-width: none; }
+
+.tabular { font-variant-numeric: tabular-nums; }
+
+/* Game stage: full screen, no gestures leaking to the browser */
+.game-stage {
+  position: fixed;
+  inset: 0;
+  touch-action: none;
+  overscroll-behavior: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+.game-stage canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+
+/* ───────────────────────── Advent doors ───────────────────────── */
+.door {
+  position: relative;
+  border-radius: 18px;
+  perspective: 600px;
+  transition: transform 0.15s ease;
+}
+.door:active { transform: scale(0.95); }
+.door-inner {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(circle at 50% 40%, #1d4934, #0e2a1d);
+  box-shadow: inset 0 4px 14px rgb(0 0 0 / 0.55), inset 0 0 0 1px rgb(255 255 255 / 0.06);
+  overflow: hidden;
+}
+.door-panel {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  transform-origin: 0% 50%;
+  transition: transform 0.55s cubic-bezier(0.5, 0, 0.3, 1);
+  box-shadow: var(--shadow-pop);
+  backface-visibility: hidden;
+  overflow: hidden;
+}
+.door.opening .door-panel { transform: rotateY(-105deg); }
+.door-berry { background: radial-gradient(circle at 30% 25%, rgb(255 255 255 / 0.18) 0 2px, transparent 2.5px) 0 0 / 14px 14px, linear-gradient(160deg, #ec5a60, #b92f38); }
+.door-pine { background: repeating-linear-gradient(135deg, rgb(245 191 79 / 0.16) 0 4px, transparent 4px 16px), linear-gradient(160deg, #2c8a5e, #17573a); }
+.door-cream { background: repeating-linear-gradient(-45deg, rgb(224 70 78 / 0.13) 0 6px, transparent 6px 18px), linear-gradient(160deg, #fffaf0, #f0dfc2); color: #7d1d26; }
+.door-ice { background: radial-gradient(circle at 70% 30%, rgb(255 255 255 / 0.22) 0 1.5px, transparent 2px) 0 0 / 11px 11px, linear-gradient(160deg, #6aa7d8, #355f8f); }
+.door-gold { background: linear-gradient(90deg, transparent 46%, #b92f38 46% 54%, transparent 54%), linear-gradient(0deg, transparent 40%, #b92f38 40% 52%, transparent 52%), radial-gradient(circle at 30% 20%, rgb(255 255 255 / 0.3) 0 2px, transparent 2.5px) 0 0 / 16px 16px, linear-gradient(160deg, #ffd479, #d99a22); color: #3b2504; }
+.door-number { font-family: var(--font-display); font-weight: 600; line-height: 1; text-shadow: 0 2px 0 rgb(0 0 0 / 0.15); }
+.door-today .door-panel { animation: var(--animate-door-glow); }
+.door-locked .door-panel::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgb(11 29 22 / 0) 30%, rgb(11 29 22 / 0.35));
+}
