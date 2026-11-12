@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Fredoka, Nunito } from "next/font/google";
+import { AppRuntime } from "@/components/app-runtime";
 import { PwaRegister } from "@/components/pwa-register";
 import "./globals.css";
 
@@ -36,6 +37,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <div className="snow-layer" aria-hidden />
         <div className="relative z-10">{children}</div>
         <PwaRegister />
+        <AppRuntime />
       </body>
     </html>
   );

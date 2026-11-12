@@ -46,6 +46,20 @@ As fotos originais ficam fora do git. As versões otimizadas só se veem com ses
 
 O puzzle usa uma foto diferente em cada dia em que aparece.
 
+## Música de fundo
+
+Põe as músicas em `public/music/` e faz deploy. A app vai buscar a lista a `/api/music`, por isso não é preciso mais nada.
+
+- **Formato:** `.m4a` (AAC) a 96–128 kbps é o melhor para iPhone: ficheiros pequenos e boa qualidade. `.mp3` também funciona. Evita `.ogg`/`.opus`, porque o Safari mais antigo não os toca.
+- Tocam baixinho, por ordem aleatória. Nenhuma se repete até terem tocado todas, mesmo entre aberturas da app.
+- Começam no primeiro toque no ecrã (o iOS não deixa tocar áudio antes disso) e podem ser desligadas em Definições → Música.
+- No iPhone respeitam o botão de silêncio e misturam-se com outra música que esteja a tocar.
+- Os ficheiros só se ouvem com sessão iniciada.
+
+## Espreitadela antes de dezembro
+
+Até 1/12/2026, três toques seguidos numa porta fechada abrem-na: dá para jogar o jogo desse dia (ou ver o resumo, na porta 25), mas nada fica guardado. A partir de 1/12/2026 deixa de funcionar. O servidor verifica a data verdadeira, e o `DEV_TODAY` não influencia.
+
 ## Assets
 
 - `npm run assets:images` gera as cabeças em WebP (128/256/512), os ícones da PWA e as fotos.
@@ -110,6 +124,7 @@ Abre o site no Safari e escolhe Partilhar → "Adicionar ao ecrã principal".
 
 ## Notas
 
-- **Haptics no iOS:** o Safari não tem `navigator.vibrate`. A partir do iOS 17.4, ao alternar um `<input type="checkbox" switch>` o sistema dá um toque háptico, e o [`haptics.ts`](src/lib/client/haptics.ts) usa isso clicando num switch escondido. Funciona quando é chamado a partir de um toque do utilizador. No Android usa-se `navigator.vibrate`. Ambos podem ser desligados nas definições, tal como os sons.
+- **Haptics no iOS:** o Safari não tem `navigator.vibrate`. A partir do iOS 17.4, ao alternar um `<input type="checkbox" switch>` o sistema dá um toque háptico, e o [`haptics.ts`](src/lib/client/haptics.ts) usa isso clicando num switch escondido. Funciona quando é chamado a partir de um toque do utilizador. No Android usa-se `navigator.vibrate`. Ambos podem ser desligados nas definições, tal como os sons. Todos os botões e links dão um toque leve, e os que já têm um háptico próprio não dão dois.
+- **Zoom:** a app fica sempre a 100%. O pinch, o duplo toque e o zoom com ctrl/cmd são bloqueados em [`zoom-lock.ts`](src/lib/client/zoom-lock.ts) e com `touch-action: manipulation`.
 - **Offline:** o service worker guarda a app e os assets em cache. Se uma pontuação não for enviada por falta de rede, fica numa fila e é reenviada quando a ligação voltar (até 10 minutos depois da meia-noite ainda conta para o dia anterior).
 - **Repor tudo:** `docker exec -it <container-do-postgres> psql -U natal -d natal -c "truncate plays;"`.

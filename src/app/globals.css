@@ -55,7 +55,10 @@
 
 html {
   background: var(--color-night);
+  /* No double-tap / pinch zoom: the app always stays at 100% (see zoom-lock.ts). */
+  touch-action: manipulation;
   -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -69,6 +72,7 @@ body {
   color: var(--color-cream);
   font-family: var(--font-sans);
   overscroll-behavior: none;
+  touch-action: manipulation;
   -webkit-font-smoothing: antialiased;
 }
 

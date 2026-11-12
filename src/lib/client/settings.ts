@@ -5,10 +5,11 @@ import { useSyncExternalStore } from "react";
 export interface Settings {
   sound: boolean;
   haptics: boolean;
+  music: boolean;
 }
 
 const KEY = "natal.settings";
-const DEFAULTS: Settings = { sound: true, haptics: true };
+const DEFAULTS: Settings = { sound: true, haptics: true, music: true };
 let current: Settings = DEFAULTS;
 let loaded = false;
 const listeners = new Set<() => void>();
@@ -40,12 +41,14 @@ export function setSettings(patch: Partial<Settings>) {
   listeners.forEach((l) => l());
 }
 
+export function subscribeSettings(cb: () => void): () => void {
+  listeners.add(cb);
+  return () => listeners.delete(cb);
+}
+
 export function useSettings(): Settings {
   return useSyncExternalStore(
-    (cb) => {
-      listeners.add(cb);
-      return () => listeners.delete(cb);
-    },
+    subscribeSettings,
     getSettings,
     () => DEFAULTS,
   );

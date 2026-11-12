@@ -24,7 +24,8 @@ export type SfxKind =
 let ctx: AudioContext | null = null;
 let master: GainNode | null = null;
 
-function audio(): AudioContext | null {
+/** The shared AudioContext (also used by the background music). Resumes it if suspended. */
+export function audio(): AudioContext | null {
   if (typeof window === "undefined") return null;
   if (!ctx) {
     const AC = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;

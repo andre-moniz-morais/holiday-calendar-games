@@ -31,6 +31,8 @@ export interface AppState {
   games: GameBoard[];
   hiddenGames: number;
   wins: PerPlayer<number> & { tie: number };
+  /** Before 1 Dec 2026: locked doors can be opened (triple tap) in preview mode. */
+  peek: boolean;
 }
 
 export interface PlayResult {

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, CloudOff, Crown, Heart, Home, Loader2, Play, RotateCcw, X } from "lucide-react";
+import { ChevronLeft, CloudOff, Crown, Eye, Heart, Home, Loader2, Play, RotateCcw, X } from "lucide-react";
 import { GameIcon } from "./game-icon";
 import { Head } from "./head";
 import { Confetti } from "./confetti";
@@ -23,7 +23,8 @@ interface Assets {
   photos: HTMLImageElement[];
 }
 
-export function GameShell({ gameId, day }: { gameId: GameId; day: number | null }) {
+/** `preview`: a locked door opened early — playable, but nothing is saved. */
+export function GameShell({ gameId, day, preview = false }: { gameId: GameId; day: number | null; preview?: boolean }) {
   const router = useRouter();
   const { state } = useAppState();
   const me = state?.me ?? null;
@@ -65,8 +66,9 @@ export function GameShell({ gameId, day }: { gameId: GameId; day: number | null 
       ended.current = true;
       const durationMs = Math.round(performance.now() - startedAt.current);
       setFinal(value);
-      setOutcome("saving");
       setTimeout(() => setPhase("over"), 450);
+      if (preview) return;
+      setOutcome("saving");
       submitPlay({ gameId, day, score: value, durationMs }).then((o) => {
         setOutcome(o);
         if (o.kind === "saved" && o.result.isRecord && o.result.plays > 1) {
@@ -75,7 +77,7 @@ export function GameShell({ gameId, day }: { gameId: GameId; day: number | null 
         }
       });
     },
-    [gameId, day],
+    [gameId, day, preview],
   );
 
   async function start() {
@@ -134,7 +136,7 @@ export function GameShell({ gameId, day }: { gameId: GameId; day: number | null 
   }
 
   const them = otherPlayer(me);
-  const dayState = day ? state.days[day - 1] : null;
+  const dayState = day && !preview ? state.days[day - 1] : null;
 
 
   return (
@@ -171,7 +173,7 @@ export function GameShell({ gameId, day }: { gameId: GameId; day: number | null 
             <button onClick={back} aria-label="Voltar" className="grid size-11 place-items-center rounded-full bg-white/8 active:scale-95">
               <ChevronLeft className="size-6" />
             </button>
-            <p className="flex-1 pr-11 text-center text-sm font-bold text-muted">{day ? `Dia ${day}` : "Modo livre"}</p>
+            <p className="flex-1 pr-11 text-center text-sm font-bold text-muted">{day ? `Dia ${day}${preview ? " · espreitadela" : ""}` : "Modo livre"}</p>
           </div>
 
           <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-6 py-6">
@@ -192,6 +194,12 @@ export function GameShell({ gameId, day }: { gameId: GameId; day: number | null 
                 </li>
               ))}
             </ul>
+
+            {preview && (
+              <p className="mt-3 flex items-center gap-2.5 rounded-2xl bg-white/5 p-3 text-sm font-semibold text-muted">
+                <Eye className="size-4 shrink-0 text-gold" /> Espreitadela antes de dezembro — os resultados não ficam guardados.
+              </p>
+            )}
 
             {dayState && (
               <div className="mt-3 grid grid-cols-2 gap-2.5">
@@ -228,6 +236,7 @@ export function GameShell({ gameId, day }: { gameId: GameId; day: number | null 
           outcome={outcome}
           me={me}
           them={them}
+          preview={preview}
           theirBest={dayState?.best[them] ?? null}
           myBest={dayState?.best[me] ?? null}
           onAgain={start}
@@ -264,9 +273,11 @@ function GameOver({
   theirBest,
   onAgain,
   onHome,
+  preview,
 }: {
   gameId: GameId;
   score: number;
+  preview: boolean;
   outcome: SubmitOutcome | "saving" | null;
   me: PlayerId;
   them: PlayerId;
@@ -290,7 +301,7 @@ function GameOver({
         </p>
         <p className="mt-1 text-sm text-muted">{scoreUnitLabel(gameId, score)}</p>
 
-        <div className="mt-5 grid grid-cols-2 gap-2.5 text-left">
+        <div className={`mt-5 grid grid-cols-2 gap-2.5 text-left ${preview ? "hidden" : ""}`}>
           {[
             { p: me, label: "O teu melhor", v: best },
             { p: them, label: `Melhor ${PLAYERS[them].name}`, v: theirBest },
@@ -318,6 +329,11 @@ function GameOver({
           )}
           {outcome && outcome !== "saving" && outcome.kind === "rejected" && <span className="text-berry">{outcome.message}</span>}
           {saved && `Jogo nº ${saved.plays} guardado`}
+          {preview && (
+            <>
+              <Eye className="size-3.5" /> Espreitadela — este resultado não fica guardado.
+            </>
+          )}
         </p>
 
         <div className="mt-4 flex gap-2.5">

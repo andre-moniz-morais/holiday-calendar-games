@@ -20,6 +20,13 @@ export function today(now = new Date()): number {
   return calendarDay(now);
 }
 
+/**
+ * Sneak peek: until 1 Dec 2026 (00:00 Lisbon == 00:00 UTC in December), triple-tapping a locked
+ * door opens it in preview mode (nothing is saved). Uses the real clock — DEV_TODAY doesn't apply.
+ */
+export const PEEK_UNTIL = Date.UTC(2026, 11, 1);
+export const canPeek = (now = new Date()) => now.getTime() < PEEK_UNTIL;
+
 /** With DEV_TODAY, pretend the clock is on that December day (keeps countdowns realistic). */
 function devNow(): number | null {
   const dev = Number(process.env.DEV_TODAY);
@@ -101,6 +108,7 @@ export async function buildState(me: PlayerId): Promise<AppState> {
     games,
     hiddenGames: Object.keys(GAMES).length - games.length,
     wins,
+    peek: canPeek(),
   };
 }
 

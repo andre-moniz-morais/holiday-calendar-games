@@ -77,7 +77,7 @@ export function WrappedView() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [i, n, paused]);
 
-  if (state && state.today < 25) {
+  if (state && state.today < 25 && !state.peek) {
     return (
       <div className="grid min-h-dvh place-items-center px-6">
         <div className="card max-w-sm p-6 text-center">

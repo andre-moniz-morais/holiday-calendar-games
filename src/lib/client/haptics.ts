@@ -51,8 +51,11 @@ const isIOS = () =>
   typeof navigator !== "undefined" &&
   (/iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1));
 
+let lastAt = 0;
+
 export function haptic(kind: HapticKind = "light") {
   if (typeof window === "undefined" || !getSettings().haptics) return;
+  lastAt = performance.now();
   try {
     if (typeof navigator.vibrate === "function" && !isIOS()) {
       navigator.vibrate(VIBRATE[kind]);
@@ -66,4 +69,22 @@ export function haptic(kind: HapticKind = "light") {
   } catch {
     /* haptics are best effort */
   }
+}
+
+const TAPPABLE = 'button, a[href], [role="button"], [role="switch"], [role="tab"], summary';
+
+/**
+ * Every button / link in the app gets a light tap haptic, unless its own click handler already
+ * fired a (more specific) one. Listens on `window` in the bubble phase so it runs after React's
+ * handlers (attached to the document) and can see whether they called `haptic()`.
+ */
+export function installTapHaptics(): () => void {
+  const onClick = (e: MouseEvent) => {
+    const el = e.target instanceof Element ? e.target.closest(TAPPABLE) : null;
+    if (!el || el.matches(":disabled, [aria-disabled='true']")) return;
+    if (performance.now() - lastAt < 120) return;
+    haptic("light");
+  };
+  window.addEventListener("click", onClick);
+  return () => window.removeEventListener("click", onClick);
 }

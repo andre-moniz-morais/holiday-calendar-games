@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { LogOut, Settings, Vibrate, VibrateOff, Volume2, VolumeX } from "lucide-react";
+import { LogOut, Music, Settings, Vibrate, VibrateOff, Volume2, VolumeX } from "lucide-react";
 import { Head } from "./head";
 import { Sheet } from "./sheet";
 import { haptic } from "@/lib/client/haptics";
@@ -47,6 +47,12 @@ export function AppHeader({ title, subtitle }: { title: string; subtitle?: React
             on={settings.sound}
             icon={settings.sound ? <Volume2 className="size-5" /> : <VolumeX className="size-5" />}
             onChange={(v) => setSettings({ sound: v })}
+          />
+          <Toggle
+            label="Música"
+            on={settings.music}
+            icon={<Music className={`size-5 ${settings.music ? "" : "opacity-40"}`} />}
+            onChange={(v) => setSettings({ music: v })}
           />
           <Toggle
             label="Vibração"

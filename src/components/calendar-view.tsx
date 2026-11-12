@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Crown, Gift, Lock, Play, Sparkles, Timer } from "lucide-react";
 import { AppHeader } from "./app-header";
@@ -21,6 +21,8 @@ import type { AppState, DayState } from "@/lib/api-types";
 const DOOR_ORDER = [7, 18, 3, 22, 12, 1, 15, 9, 24, 5, 20, 11, 2, 17, 8, 14, 23, 4, 10, 19, 6, 13, 21, 16];
 const STYLES = ["door-berry", "door-pine", "door-cream", "door-ice"];
 const doorStyle = (day: number) => STYLES[(day * 7 + Math.floor(day / 3)) % STYLES.length];
+/** Max gap between taps for them to count as "in a row" (sneak peek = 3 taps on a locked door). */
+const PEEK_TAP_GAP = 600;
 
 export function CalendarView() {
   const { state, clockOffset } = useAppState();
@@ -30,14 +32,35 @@ export function CalendarView() {
   const [opening, setOpening] = useState<number | null>(null);
   const onZero = useCallback(() => void refreshState(), []);
   const countdown = useNextDoorCountdown(clockOffset, onZero);
+  const taps = useRef({ day: 0, count: 0, at: 0 });
 
   const showToast = (msg: string) => {
     setToast(msg);
     setTimeout(() => setToast((t) => (t === msg ? null : t)), 2200);
   };
 
+  /** Before 1 Dec 2026, three taps in a row on a locked door open it as a preview. */
+  function peekTap(d: DayState): boolean {
+    const t = taps.current;
+    const now = performance.now();
+    if (t.day === d.day && now - t.at < PEEK_TAP_GAP) t.count++;
+    else taps.current = { day: d.day, count: 1, at: now };
+    taps.current.at = now;
+    if (taps.current.count < 3) return false;
+    taps.current = { day: 0, count: 0, at: 0 };
+    haptic("success");
+    sfx("unlock");
+    setOpening(d.day);
+    setToast(null);
+    setTimeout(() => router.push(d.day === 25 ? "/wrapped" : `/preview/${d.day}`), 520);
+    // The calendar may be kept alive in the background — close the door again.
+    setTimeout(() => setOpening((o) => (o === d.day ? null : o)), 1500);
+    return true;
+  }
+
   function openDoor(d: DayState) {
     if (d.status === "locked") {
+      if (state?.peek && peekTap(d)) return;
       haptic("error");
       const tomorrow = state && d.day === state.today + 1;
       showToast(tomorrow && countdown !== null ? `Abre daqui a ${formatCountdown(countdown)}` : `Abre a ${d.day} de dezembro`);
@@ -57,6 +80,7 @@ export function CalendarView() {
       setTimeout(() => router.push(`/play/${d.day}`), 520);
       return;
     }
+    taps.current.count = 0;
     haptic("select");
     setSheetDay(d);
   }
