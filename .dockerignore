@@ -1,0 +1,17 @@
+.git
+.next
+node_modules
+npm-debug.log*
+.env*
+!.env.example
+.DS_Store
+.vercel
+*.tsbuildinfo
+
+# Raw assets are only needed by the asset scripts, never at runtime
+assets-src
+
+# Docker files themselves
+Dockerfile
+docker-compose.yml
+.dockerignore

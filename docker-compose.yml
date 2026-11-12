@@ -1,0 +1,33 @@
+services:
+  web:
+    build:
+      context: .
+      args:
+        NEXT_PUBLIC_CALENDAR_YEAR: ${NEXT_PUBLIC_CALENDAR_YEAR:-2026}
+    image: natal-a-dois:latest
+    container_name: natal-a-dois
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: ${DATABASE_URL:?Define DATABASE_URL no .env}
+      SESSION_SECRET: ${SESSION_SECRET:?Define SESSION_SECRET no .env}
+      PASSWORD_DUDA: ${PASSWORD_DUDA:-Duda}
+      PASSWORD_FILIPINO: ${PASSWORD_FILIPINO:-Filipino}
+      # Só para testes — tem de ficar vazio em produção.
+      DEV_TODAY: ${DEV_TODAY:-}
+    # Sem `ports`: o Traefik fala diretamente com o container na rede partilhada (porta 3000).
+    expose:
+      - "3000"
+    networks:
+      - docker_shared_network
+    # Se o Traefik usar labels do Docker, descomenta e ajusta o domínio:
+    # labels:
+    #   - traefik.enable=true
+    #   - traefik.docker.network=docker_shared_network
+    #   - traefik.http.routers.natal.rule=Host(`natal.exemplo.com`)
+    #   - traefik.http.routers.natal.entrypoints=websecure
+    #   - traefik.http.routers.natal.tls=true
+    #   - traefik.http.services.natal.loadbalancer.server.port=3000
+
+networks:
+  docker_shared_network:
+    external: true

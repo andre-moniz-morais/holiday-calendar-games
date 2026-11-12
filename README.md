@@ -23,7 +23,7 @@ Calendário do advento com jogos para dois: todos os dias de 1 a 24 de dezembro 
 
 O calendário (que jogo calha em que dia) está em [`src/lib/server/schedule.ts`](src/lib/server/schedule.ts). Fica do lado do servidor para os jogos futuros continuarem surpresa.
 
-## Correr localmente
+## Correr localmente (desenvolvimento)
 
 ```bash
 cp .env.example .env.local           # preenche SESSION_SECRET (openssl rand -hex 32)
@@ -51,15 +51,65 @@ O puzzle usa uma foto diferente em cada dia em que aparece.
 - `npm run assets:images` gera as cabeças em WebP (128/256/512), os ícones da PWA e as fotos.
 - `npm run assets:3d` converte as cabeças 3D (OBJ com 1M de triângulos e texturas 2K) em GLB com cerca de 400 KB. Antes de correr, descomprime `assets-src/*_head_3d.zip` para `assets-src/heads3d/{filipino,duda}/`. Os ZIPs e os OBJ não vão para o git porque são demasiado grandes.
 
-## Deploy (Vercel + Neon)
+## Deploy no Mac mini (Docker + Traefik)
 
-1. Cria uma base de dados Postgres (Neon, Supabase ou Vercel Postgres) e copia a connection string.
-2. Na Vercel, importa o repositório e define as variáveis `DATABASE_URL`, `SESSION_SECRET` e `NEXT_PUBLIC_CALENDAR_YEAR=2026`. Não definas `DEV_TODAY`.
-3. Corre `DATABASE_URL=… npm run db:setup` uma vez a partir do teu computador.
-4. No iPhone, abre o site no Safari e escolhe Partilhar → "Adicionar ao ecrã principal".
+O `docker-compose.yml` constrói a imagem e liga o container `natal-a-dois` à rede externa `docker_shared_network`, onde já estão o Postgres e o Traefik. **Não publica portas no host.** O Traefik encaminha os pedidos diretamente para `natal-a-dois:3000` dentro da rede.
+
+### 1. Criar a base de dados no Postgres partilhado (só da primeira vez)
+
+```bash
+docker exec -it <container-do-postgres> psql -U <superuser> -c "CREATE USER natal WITH PASSWORD 'uma-password-forte';"
+docker exec -it <container-do-postgres> psql -U <superuser> -c "CREATE DATABASE natal OWNER natal;"
+```
+
+### 2. Criar o `.env` ao lado do `docker-compose.yml`
+
+```bash
+cp .env.example .env
+```
+
+```env
+# o host é o nome do container do Postgres na docker_shared_network
+DATABASE_URL=postgres://natal:uma-password-forte@<container-do-postgres>:5432/natal
+SESSION_SECRET=<openssl rand -hex 32>
+NEXT_PUBLIC_CALENDAR_YEAR=2026
+DEV_TODAY=
+```
+
+O `.env` está no `.gitignore`. `DEV_TODAY` **tem de ficar vazio** em produção.
+
+### 3. Arrancar
+
+```bash
+docker compose up -d --build
+docker compose logs -f web      # deve aparecer "✓ schema applied, players seeded" e "Ready"
+```
+
+Em cada arranque, o container corre primeiro o `scripts/db-setup.mjs`, que cria as tabelas se não existirem e (re)grava as duas palavras-passe, e só depois o servidor Next.js. Esta operação é idempotente e nunca apaga pontuações. Para mudar as palavras-passe, define `PASSWORD_DUDA` / `PASSWORD_FILIPINO` no `.env` e reinicia o container.
+
+O container tem um healthcheck (`/manifest.webmanifest`). Usa `docker ps` para ver o estado `healthy`.
+
+### 4. Traefik
+
+O serviço escuta na **porta 3000**. Se o Traefik usar labels do Docker, descomenta o bloco `labels` no `docker-compose.yml` e ajusta o domínio e o entrypoint. Se usar configuração por ficheiro, aponta o serviço para `http://natal-a-dois:3000`.
+
+> ⚠️ O site tem de ser servido em **HTTPS**. Em produção, o cookie de sessão é `Secure`, por isso em HTTP simples o login parece funcionar mas a sessão não fica guardada.
+
+### 5. Atualizar
+
+```bash
+git pull
+docker compose up -d --build
+```
+
+As fotos e as cabeças vão dentro da imagem (`public/`). Depois de mudar fotos com `npm run assets:images`, faz commit dos ficheiros gerados e volta a fazer o build.
+
+### No iPhone
+
+Abre o site no Safari e escolhe Partilhar → "Adicionar ao ecrã principal".
 
 ## Notas
 
 - **Haptics no iOS:** o Safari não tem `navigator.vibrate`. A partir do iOS 17.4, ao alternar um `<input type="checkbox" switch>` o sistema dá um toque háptico, e o [`haptics.ts`](src/lib/client/haptics.ts) usa isso clicando num switch escondido. Funciona quando é chamado a partir de um toque do utilizador. No Android usa-se `navigator.vibrate`. Ambos podem ser desligados nas definições, tal como os sons.
 - **Offline:** o service worker guarda a app e os assets em cache. Se uma pontuação não for enviada por falta de rede, fica numa fila e é reenviada quando a ligação voltar (até 10 minutos depois da meia-noite ainda conta para o dia anterior).
-- **Repor tudo:** `truncate plays;` na base de dados.
+- **Repor tudo:** `docker exec -it <container-do-postgres> psql -U natal -d natal -c "truncate plays;"`.
